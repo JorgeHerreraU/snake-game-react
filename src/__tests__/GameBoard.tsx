@@ -1,0 +1,1 @@
+describe("GameBoard component", () => {});
