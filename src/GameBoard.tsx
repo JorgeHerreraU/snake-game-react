@@ -17,13 +17,13 @@ type BoardState = {
   food: Point;
 };
 
-function GameBoard({ size = 10 }) {
+function GameBoard({ size = 15 }) {
   const [score, setScore] = useState(0);
   const [boardState, setBoardState] = useState<BoardState>(setupGame());
   const [direction, setDirection] = useState<Direction>(Direction.Right);
   const [isGameFinished, setIsGameFinished] = useState(false);
-  const [nextMoves, setNextMoves] = useState<Direction[]>([]);
 
+  const nextMoves = useRef<Direction[]>([]);
   const requestRef = useRef<number | null>();
   const previousTimeRef = useRef<number | null>();
 
@@ -59,51 +59,6 @@ function GameBoard({ size = 10 }) {
     gridState[row][col] = Square.Pickup;
     return { x: col, y: row };
   }
-
-  const getLastDirection = useCallback(
-    (): Direction =>
-      nextMoves.length === 0 ? direction : nextMoves[nextMoves.length - 1],
-    [direction, nextMoves],
-  );
-
-  const canSetNextMove = useCallback(
-    (direction: Direction): boolean => {
-      if (nextMoves.length == 2) {
-        return false;
-      }
-      const lastDirection = getLastDirection();
-      return (
-        direction !== lastDirection && !lastDirection.isOpposite(direction)
-      );
-    },
-    [getLastDirection, nextMoves.length],
-  );
-
-  const handleKeyDown = useCallback(
-    (event: KeyboardEvent) => {
-      let nextMove: Direction | null = null;
-      switch (event.key) {
-        case "ArrowLeft":
-          nextMove = Direction.Left;
-          break;
-        case "ArrowRight":
-          nextMove = Direction.Right;
-          break;
-        case "ArrowUp":
-          nextMove = Direction.Up;
-          break;
-        case "ArrowDown":
-          nextMove = Direction.Down;
-          break;
-        default:
-          break;
-      }
-      if (nextMove && canSetNextMove(nextMove)) {
-        setNextMoves((prevState) => [...prevState, nextMove!]);
-      }
-    },
-    [canSetNextMove],
-  );
 
   const getSquare = useCallback(getSquareByPoint, []);
 
@@ -177,18 +132,21 @@ function GameBoard({ size = 10 }) {
     }
     return emptyPositions;
   }
+  const CellMemo = React.memo(Cell);
 
-  function renderGrid(grid: Square[][]): React.ReactElement[] {
-    return grid.map((row, r) => (
-      <tr key={`row-${r}`}>
-        {row.map((cell, c) => (
-          <td key={`cell-${r}-${c}`} className="grid-cell">
-            <Cell type={cell} />
-          </td>
-        ))}
-      </tr>
-    ));
-  }
+  const renderGrid = useCallback(
+    (grid: Square[][]): React.ReactElement[] =>
+      grid.map((row, r) => (
+        <tr key={`row-${r}`}>
+          {row.map((cell, c) => (
+            <td key={`cell-${r}-${c}`} className="grid-cell">
+              <CellMemo type={cell} />
+            </td>
+          ))}
+        </tr>
+      )),
+    [CellMemo],
+  );
 
   const addPickup = useCallback(setupFood, []);
 
@@ -212,9 +170,8 @@ function GameBoard({ size = 10 }) {
   );
 
   const gameLoop = useCallback(() => {
-    if (nextMoves.length > 0) {
-      setDirection(nextMoves[0]);
-      setNextMoves((prevState) => [...prevState.slice(1)]);
+    if (nextMoves.current.length > 0) {
+      setDirection(nextMoves.current.shift()!);
     }
     const newSnake = [...boardState.snake];
     const currentHead = newSnake[0];
@@ -238,21 +195,13 @@ function GameBoard({ size = 10 }) {
       newGrid[boardState.food.y][boardState.food.x] = Square.Pickup;
       setBoardState({ ...boardState, snake: newSnake, grid: newGrid });
     }
-  }, [
-    nextMoves,
-    boardState,
-    direction,
-    hitWall,
-    hasPickedUpFood,
-    moveSnake,
-    addPickup,
-  ]);
+  }, [boardState, direction, hitWall, hasPickedUpFood, moveSnake, addPickup]);
 
   const animate = useCallback(
     (time: number) => {
-      if (previousTimeRef.current != undefined) {
+      if (previousTimeRef.current) {
         const deltaTime = time - previousTimeRef.current;
-        if (deltaTime > 150) {
+        if (deltaTime > 75) {
           gameLoop();
           previousTimeRef.current = time;
         }
@@ -265,6 +214,32 @@ function GameBoard({ size = 10 }) {
     },
     [gameLoop, isGameFinished],
   );
+  const getDirectionByKey = (key: string): Direction | null => {
+    switch (key) {
+      case "ArrowLeft":
+        return Direction.Left;
+      case "ArrowRight":
+        return Direction.Right;
+      case "ArrowUp":
+        return Direction.Up;
+      case "ArrowDown":
+        return Direction.Down;
+      default:
+        return null;
+    }
+  };
+  const canSetDirection = useCallback(
+    (nextMove: Direction) => {
+      if (nextMoves.current.length > 0) {
+        const lastDirection = nextMoves.current[nextMoves.current.length - 1];
+        return (
+          !lastDirection.isOpposite(nextMove) && nextMove !== lastDirection
+        );
+      }
+      return !direction.isOpposite(nextMove) && nextMove !== direction;
+    },
+    [direction],
+  );
 
   useEffect(() => {
     requestRef.current = requestAnimationFrame(animate);
@@ -276,22 +251,29 @@ function GameBoard({ size = 10 }) {
   }, [animate]);
 
   useEffect(() => {
-    const handleKey = (event: KeyboardEvent) => handleKeyDown(event);
-    window.addEventListener("keydown", handleKey);
-
-    return () => {
-      window.removeEventListener("keydown", handleKey);
+    const handleKeyDown = (event: KeyboardEvent) => {
+      const nextMove = getDirectionByKey(event.key);
+      if (nextMove && canSetDirection(nextMove)) {
+        nextMoves.current.push(nextMove);
+      }
     };
-  }, [handleKeyDown]);
+
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [canSetDirection]);
 
   const renderedGrid = useMemo(
     () => renderGrid(boardState.grid),
-    [boardState.grid],
+    [boardState.grid, renderGrid],
   );
 
   return (
     <>
-      <h1 className="score-text">SCORE: {score}</h1>
+      <div className="score-text">
+        {isGameFinished
+          ? `GAME OVER - FINAL SCORE: ${score}`
+          : `SCORE: ${score}`}
+      </div>
       <table className="game-board">
         <tbody>{renderedGrid}</tbody>
       </table>

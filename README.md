@@ -1,30 +1,48 @@
-# React + TypeScript + Vite
+# React Snake Game
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+## Description
+This is a project for a React-based Snake game. 
 
-Currently, two official plugins are available:
+This is my first ever React project, and the idea is to get a grasp of the library and the best development practices.
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react/README.md) uses [Babel](https://babeljs.io/) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+Code reviews and contributions are super welcomed.
 
-## Expanding the ESLint configuration
+## Features
+- Classic Snake gameplay
+- High score tracking
+- Customizable game settings (speed, size, etc.) (Upcoming)
 
-If you are developing a production application, we recommend updating the configuration to enable type aware lint rules:
+## Getting Started
+git clone https://github.com/JorgeHerreraU/snake-game-react.git
 
-- Configure the top-level `parserOptions` property like this:
+### Prerequisites
+- Node.js (v20 or later recommended)
+- npm (v12 or later)
 
-```js
-export default {
-  // other rules...
-  parserOptions: {
-    ecmaVersion: 'latest',
-    sourceType: 'module',
-    project: ['./tsconfig.json', './tsconfig.node.json'],
-    tsconfigRootDir: __dirname,
-  },
-}
-```
+### Installation
+1. Clone the repository
+2. Navigate to the project directory: cd react-snake-game
+3. Install the dependencies: npm install
+4. Start the development server: npm run dev
 
-- Replace `plugin:@typescript-eslint/recommended` to `plugin:@typescript-eslint/recommended-type-checked` or `plugin:@typescript-eslint/strict-type-checked`
-- Optionally add `plugin:@typescript-eslint/stylistic-type-checked`
-- Install [eslint-plugin-react](https://github.com/jsx-eslint/eslint-plugin-react) and add `plugin:react/recommended` & `plugin:react/jsx-runtime` to the `extends` list
+Open [ http://localhost:5173/]( http://localhost:5173/) to view the game in your browser.
+
+## Contributing
+Contributions are what make the open-source community such an amazing place to learn, inspire, and create. Any contributions you make are **greatly appreciated**.
+
+1. Fork the Project
+2. Create your Feature Branch (`git checkout -b feature/new-snake-feature`)
+3. Commit your Changes (`git commit -m 'Add scoreboard animations'`)
+4. Push to the Branch (`git push origin feature/new-snake-feature`)
+5. Open a Pull Request
+
+## License
+Distributed under the MIT License. See `LICENSE` for more information.
+
+## Contact
+Jorge Herrera - [@Linkedin](https://www.linkedin.com/feed/) - jorgeherreraulloa@gmail.com
+
+Project Link: [https://github.com/JorgeHerreraU/snake-game-react](https://github.com/JorgeHerreraU/snake-game-react)
+
+## Acknowledgments
+- [React Documentation](https://react.dev/)
