@@ -12,6 +12,10 @@ Code reviews and contributions are super welcomed.
 - High score tracking
 - Customizable game settings (speed, size, etc.) (Upcoming)
 
+## Demo
+[https://jorgeherrerau.github.io/snake-game-react/](https://jorgeherrerau.github.io/snake-game-react/)
+
+![snake-game.png](/snake-game.png)
 ## Getting Started
 git clone https://github.com/JorgeHerreraU/snake-game-react.git
 
@@ -38,7 +42,6 @@ Contributions are what make the open-source community such an amazing place to l
 
 ## License
 Distributed under the MIT License. See `LICENSE` for more information.
-
 ## Contact
 Jorge Herrera - [@Linkedin](https://www.linkedin.com/feed/) - jorgeherreraulloa@gmail.com
 

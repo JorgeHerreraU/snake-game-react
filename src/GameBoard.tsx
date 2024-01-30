@@ -26,7 +26,6 @@ function GameBoard({ size = 15 }) {
   const nextMoves = useRef<Direction[]>([]);
   const requestRef = useRef<number | null>();
   const previousTimeRef = useRef<number | null>();
-
   function setupSnake(): Point[] {
     const newSnake: Point[] = [];
     const row = Math.floor(size / 2);
@@ -113,6 +112,10 @@ function GameBoard({ size = 15 }) {
     },
     [direction, getSquare, size],
   );
+
+  function refreshPage() {
+    window.location.reload();
+  }
 
   function setupGame() {
     const snakeState = setupSnake();
@@ -277,6 +280,15 @@ function GameBoard({ size = 15 }) {
       <table className="game-board">
         <tbody>{renderedGrid}</tbody>
       </table>
+      <div>
+        <button
+          onClick={refreshPage}
+          className="btn-board"
+          disabled={!isGameFinished}
+        >
+          Restart
+        </button>
+      </div>
     </>
   );
 }
