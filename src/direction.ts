@@ -16,4 +16,8 @@ export class Direction {
   public move(point: Point): Point {
     return { x: point.x + this.x, y: point.y + this.y };
   }
+
+  public isOpposite(other: Direction): boolean {
+    return this.x === -other.x && this.y === -other.y;
+  }
 }

@@ -8,7 +8,7 @@ import React, {
 import "./GameBoard.css";
 import { Square } from "./enums/square";
 import { Cell } from "./Cell";
-import { Point } from "./point";
+import { getSquareByPoint, Point } from "./point";
 import { Direction } from "./direction.ts";
 
 type BoardState = {
@@ -22,10 +22,9 @@ function GameBoard({ size = 10 }) {
   const [boardState, setBoardState] = useState<BoardState>(setupGame());
   const [direction, setDirection] = useState<Direction>(Direction.Right);
   const [isGameFinished, setIsGameFinished] = useState(false);
+  const [nextMoves, setNextMoves] = useState<Direction[]>([]);
 
-  // declaration to store the animation reference id
   const requestRef = useRef<number | null>();
-  // declaration to store the timestamp of the last animation frame
   const previousTimeRef = useRef<number | null>();
 
   function setupSnake(): Point[] {
@@ -61,104 +60,60 @@ function GameBoard({ size = 10 }) {
     return { x: col, y: row };
   }
 
+  const getLastDirection = useCallback(
+    (): Direction =>
+      nextMoves.length === 0 ? direction : nextMoves[nextMoves.length - 1],
+    [direction, nextMoves],
+  );
+
+  const canSetNextMove = useCallback(
+    (direction: Direction): boolean => {
+      if (nextMoves.length == 2) {
+        return false;
+      }
+      const lastDirection = getLastDirection();
+      return (
+        direction !== lastDirection && !lastDirection.isOpposite(direction)
+      );
+    },
+    [getLastDirection, nextMoves.length],
+  );
+
   const handleKeyDown = useCallback(
     (event: KeyboardEvent) => {
+      let nextMove: Direction | null = null;
       switch (event.key) {
         case "ArrowLeft":
-          if (direction !== Direction.Right) setDirection(Direction.Left);
+          nextMove = Direction.Left;
           break;
         case "ArrowRight":
-          if (direction !== Direction.Left) setDirection(Direction.Right);
+          nextMove = Direction.Right;
           break;
         case "ArrowUp":
-          if (direction !== Direction.Down) setDirection(Direction.Up);
+          nextMove = Direction.Up;
           break;
         case "ArrowDown":
-          if (direction !== Direction.Up) setDirection(Direction.Down);
+          nextMove = Direction.Down;
           break;
         default:
           break;
       }
+      if (nextMove && canSetNextMove(nextMove)) {
+        setNextMoves((prevState) => [...prevState, nextMove!]);
+      }
     },
-    [direction],
+    [canSetNextMove],
   );
 
-  const getSquare = useCallback(
-    (prev: Point, current: Point, next: Point): Square => {
-      const isTopLeft =
-        (prev.x === current.x &&
-          prev.y < current.y &&
-          next.x < current.x &&
-          next.y === current.y) ||
-        (prev.x < current.x &&
-          prev.y === current.y &&
-          next.x === current.x &&
-          next.y < current.y);
-      const isTopRight =
-        (prev.x > current.x &&
-          prev.y === current.y &&
-          next.x === current.x &&
-          next.y < current.y) ||
-        (prev.x === current.x &&
-          prev.y < current.y &&
-          next.x > current.x &&
-          next.y === current.y);
-      const isBottomLeft =
-        (prev.x < current.x &&
-          prev.y === current.y &&
-          next.x === current.x &&
-          next.y > current.y) ||
-        (prev.x === current.x &&
-          prev.y > current.y &&
-          next.x < current.x &&
-          next.y === current.y);
-      const isBottomRight =
-        (prev.x === current.x &&
-          prev.y > current.y &&
-          next.x > current.x &&
-          next.y === current.y) ||
-        (prev.x > current.x &&
-          prev.y === current.y &&
-          next.x === current.x &&
-          next.y > current.y);
-      const isVertical =
-        prev.y !== current.y &&
-        next.y !== current.y &&
-        prev.x === current.x &&
-        next.x === current.x;
-      const isHorizontal =
-        prev.y === current.y &&
-        next.y === current.y &&
-        prev.x !== current.x &&
-        next.x !== current.x;
-
-      if (isTopLeft) return Square.SnakeBodyTopLeft;
-      if (isTopRight) return Square.SnakeBodyTopRight;
-      if (isBottomLeft) return Square.SnakeBodyBottomLeft;
-      if (isBottomRight) return Square.SnakeBodyBottomRight;
-      if (isVertical) return Square.SnakeBodyVertical;
-      if (isHorizontal) return Square.SnakeBodyHorizontal;
-      return Square.Empty;
-    },
-    [],
-  );
+  const getSquare = useCallback(getSquareByPoint, []);
 
   const moveSnake = useCallback(
     (snakeState: Point[]): Square[][] => {
-      const newGrid = Array.from({ length: size }, () =>
-        Array.from({ length: size }, () => Square.Empty),
-      );
+      const newGrid: Square[][] = new Array(size)
+        .fill(null)
+        .map(() => new Array(size).fill(Square.Empty));
 
       const snakeHead = snakeState[0];
-      const snakeTail = snakeState[snakeState.length - 1];
-
-      for (let i = 1; i < snakeState.length - 1; i++) {
-        const prev = snakeState[i - 1];
-        const next = snakeState[i + 1];
-        const current = snakeState[i];
-        newGrid[current.y][current.x] = getSquare(prev, current, next);
-      }
-
       switch (direction) {
         case Direction.Left:
           newGrid[snakeHead.y][snakeHead.x] = Square.SnakeHeadLeft;
@@ -174,25 +129,30 @@ function GameBoard({ size = 10 }) {
           break;
       }
 
-      const snakeTailPrev = snakeState[snakeState.length - 2];
-      const tailDown =
-        snakeTail.x === snakeTailPrev.x && snakeTail.y > snakeTailPrev.y;
-      const tailUp =
-        snakeTail.x === snakeTailPrev.x && snakeTail.y < snakeTailPrev.y;
-      const tailLeft =
-        snakeTail.x < snakeTailPrev.x && snakeTail.y === snakeTailPrev.y;
-      const tailRight =
-        snakeTail.x > snakeTailPrev.x && snakeTail.y === snakeTailPrev.y;
-
-      if (tailDown) {
-        newGrid[snakeTail.y][snakeTail.x] = Square.SnakeTailDown;
-      } else if (tailUp) {
-        newGrid[snakeTail.y][snakeTail.x] = Square.SnakeTailUp;
-      } else if (tailLeft) {
-        newGrid[snakeTail.y][snakeTail.x] = Square.SnakeTailLeft;
-      } else if (tailRight) {
-        newGrid[snakeTail.y][snakeTail.x] = Square.SnakeTailRight;
+      for (let i = 1; i < snakeState.length - 1; i++) {
+        const prev = snakeState[i - 1];
+        const next = snakeState[i + 1];
+        const current = snakeState[i];
+        newGrid[current.y][current.x] = getSquare(prev, current, next);
       }
+
+      const snakeTail = snakeState[snakeState.length - 1];
+      const snakeTailPrev = snakeState[snakeState.length - 2];
+      const deltaX = snakeTail.x - snakeTailPrev.x;
+      const deltaY = snakeTail.y - snakeTailPrev.y;
+
+      const tailDirection =
+        deltaY === 1
+          ? Square.SnakeTailDown
+          : deltaY === -1
+            ? Square.SnakeTailUp
+            : deltaX === -1
+              ? Square.SnakeTailLeft
+              : deltaX === 1
+                ? Square.SnakeTailRight
+                : null;
+
+      newGrid[snakeTail.y][snakeTail.x] = tailDirection!;
 
       return newGrid;
     },
@@ -252,6 +212,10 @@ function GameBoard({ size = 10 }) {
   );
 
   const gameLoop = useCallback(() => {
+    if (nextMoves.length > 0) {
+      setDirection(nextMoves[0]);
+      setNextMoves((prevState) => [...prevState.slice(1)]);
+    }
     const newSnake = [...boardState.snake];
     const currentHead = newSnake[0];
     const newHead = direction.move(currentHead);
@@ -274,49 +238,31 @@ function GameBoard({ size = 10 }) {
       newGrid[boardState.food.y][boardState.food.x] = Square.Pickup;
       setBoardState({ ...boardState, snake: newSnake, grid: newGrid });
     }
-  }, [boardState, direction, hitWall, hasPickedUpFood, moveSnake, addPickup]);
+  }, [
+    nextMoves,
+    boardState,
+    direction,
+    hitWall,
+    hasPickedUpFood,
+    moveSnake,
+    addPickup,
+  ]);
 
-  /**
-   * Define `animate` as a callback function that gets memoized by `useCallback` to prevent unnecessary re-creations
-   * This function is designed to be passed to `requestAnimationFrame` for creating smooth animations
-   * `time` parameter represents the current time (in milliseconds) when the callback is executed
-   */
   const animate = useCallback(
     (time: number) => {
-      // Check if `previousTimeRef.current` has been initialized
-      // This is necessary because during the first call, `previousTimeRef.current` won't have a value yet
       if (previousTimeRef.current != undefined) {
-        // Calculate `deltaTime` as the difference between the current time and the last recorded time
-        // This measures how much time has passed since the last frame was rendered
         const deltaTime = time - previousTimeRef.current;
-
-        // Check if `deltaTime` exceeds 150 milliseconds, the threshold for updating the game state
-        // This condition ensures that the game logic updates at a controlled rate, not necessarily every frame
-        // This is useful for throttling the game's update rate to make it independent of the frame rate
         if (deltaTime > 150) {
-          // Call `gameLoop` to update the game state based on the current `deltaTime`
-          // This includes moving the snake, checking for collisions, and possibly ending the game
           gameLoop();
-          // Update `previousTimeRef.current` with the current time
-          // This sets the baseline for calculating `deltaTime` in the next animation frame
           previousTimeRef.current = time;
         }
       } else {
-        // Initialize `previousTimeRef.current` with the current time during the first animation frame
-        // This is necessary for the `deltaTime` calculation in subsequent frames
         previousTimeRef.current = time;
       }
-      // Check if the game is not finished to decide whether to continue the animation
       if (!isGameFinished) {
-        // Request the next animation frame by calling `requestAnimationFrame` with `animate`
-        // The returned request ID is stored in `requestRef.current` for potential cancellation
-        // This creates a loop, with `animate` being called before the next repaint
         requestRef.current = requestAnimationFrame(animate);
       }
     },
-    // Include `gameLoop` and `isGameFinished` in the dependency array of `useCallback`
-    // This ensures that `animate` uses the latest state and functions
-    // `useCallback` will create a new instance of `animate` only if these dependencies change
     [gameLoop, isGameFinished],
   );
 
