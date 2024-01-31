@@ -5,7 +5,7 @@ export interface Point {
   y: number;
 }
 
-export function getSquareByPoint(
+export function getSnakeBodySquareByPoints(
   prev: Point,
   current: Point,
   next: Point,

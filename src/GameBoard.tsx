@@ -1,4 +1,5 @@
 import React, {
+  memo,
   useCallback,
   useEffect,
   useMemo,
@@ -8,8 +9,19 @@ import React, {
 import "./GameBoard.css";
 import { Square } from "./enums/square";
 import { Cell } from "./Cell";
-import { getSquareByPoint, Point } from "./point";
+import { getSnakeBodySquareByPoints, Point } from "./point";
 import { Direction } from "./direction.ts";
+import {
+  GAME_SCORE_TITLE,
+  GAME_OVER_TITLE,
+  RESTART_TEXT,
+  REFRESH_RATE,
+  ARROW_LEFT,
+  ARROW_RIGHT,
+  ARROW_UP,
+  ARROW_DOWN,
+} from "./constants.ts";
+import { SquareBitmaps, squareBitmaps } from "./square-bitmaps.ts";
 
 type BoardState = {
   snake: Point[];
@@ -26,6 +38,19 @@ function GameBoard({ size = 15 }) {
   const nextMoves = useRef<Direction[]>([]);
   const requestRef = useRef<number | null>();
   const previousTimeRef = useRef<number | null>();
+
+  useEffect(() => {
+    const preloadImages = (imageMap: SquareBitmaps) => {
+      Object.values(imageMap).forEach((url) => {
+        if (url) {
+          const img = new Image();
+          img.src = url;
+        }
+      });
+    };
+    preloadImages(squareBitmaps);
+  }, []);
+
   function setupSnake(): Point[] {
     const newSnake: Point[] = [];
     const row = Math.floor(size / 2);
@@ -59,7 +84,7 @@ function GameBoard({ size = 15 }) {
     return { x: col, y: row };
   }
 
-  const getSquare = useCallback(getSquareByPoint, []);
+  const getSquare = useCallback(getSnakeBodySquareByPoints, []);
 
   const moveSnake = useCallback(
     (snakeState: Point[]): Square[][] => {
@@ -113,11 +138,11 @@ function GameBoard({ size = 15 }) {
     [direction, getSquare, size],
   );
 
-  function refreshPage() {
+  function refreshPage(): void {
     window.location.reload();
   }
 
-  function setupGame() {
+  function setupGame(): BoardState {
     const snakeState = setupSnake();
     const gridState = setupGrid(snakeState);
     const foodState = setupFood(gridState);
@@ -135,7 +160,7 @@ function GameBoard({ size = 15 }) {
     }
     return emptyPositions;
   }
-  const CellMemo = React.memo(Cell);
+  const CellMemo = memo(Cell);
 
   const renderGrid = useCallback(
     (grid: Square[][]): React.ReactElement[] =>
@@ -161,7 +186,7 @@ function GameBoard({ size = 15 }) {
 
   function hitSelf(newSnake: Point[], newHead: Point): boolean {
     return newSnake.some(
-      (snakeBodySegment) =>
+      (snakeBodySegment: Point) =>
         snakeBodySegment.x === newHead.x && snakeBodySegment.y === newHead.y,
     );
   }
@@ -176,6 +201,7 @@ function GameBoard({ size = 15 }) {
     if (nextMoves.current.length > 0) {
       setDirection(nextMoves.current.shift()!);
     }
+
     const newSnake = [...boardState.snake];
     const currentHead = newSnake[0];
     const newHead = direction.move(currentHead);
@@ -204,7 +230,7 @@ function GameBoard({ size = 15 }) {
     (time: number) => {
       if (previousTimeRef.current) {
         const deltaTime = time - previousTimeRef.current;
-        if (deltaTime > 75) {
+        if (deltaTime > REFRESH_RATE) {
           gameLoop();
           previousTimeRef.current = time;
         }
@@ -217,20 +243,22 @@ function GameBoard({ size = 15 }) {
     },
     [gameLoop, isGameFinished],
   );
+
   const getDirectionByKey = (key: string): Direction | null => {
     switch (key) {
-      case "ArrowLeft":
+      case ARROW_LEFT:
         return Direction.Left;
-      case "ArrowRight":
+      case ARROW_RIGHT:
         return Direction.Right;
-      case "ArrowUp":
+      case ARROW_UP:
         return Direction.Up;
-      case "ArrowDown":
+      case ARROW_DOWN:
         return Direction.Down;
       default:
         return null;
     }
   };
+
   const canSetDirection = useCallback(
     (nextMove: Direction) => {
       if (nextMoves.current.length > 0) {
@@ -260,7 +288,6 @@ function GameBoard({ size = 15 }) {
         nextMoves.current.push(nextMove);
       }
     };
-
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
   }, [canSetDirection]);
@@ -274,8 +301,8 @@ function GameBoard({ size = 15 }) {
     <>
       <div className="score-text">
         {isGameFinished
-          ? `GAME OVER - FINAL SCORE: ${score}`
-          : `SCORE: ${score}`}
+          ? `${GAME_OVER_TITLE}: ${score}`
+          : `${GAME_SCORE_TITLE}: ${score}`}
       </div>
       <table className="game-board">
         <tbody>{renderedGrid}</tbody>
@@ -286,7 +313,7 @@ function GameBoard({ size = 15 }) {
           className="btn-board"
           disabled={!isGameFinished}
         >
-          Restart
+          {RESTART_TEXT}
         </button>
       </div>
     </>

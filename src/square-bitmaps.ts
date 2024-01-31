@@ -3,7 +3,10 @@ import { Square } from "./enums/square.ts";
 const getAssetPath = (assetPath: string) =>
   `${import.meta.env.BASE_URL}${assetPath}`;
 
-export const squareBitmaps = {
+export type SquareBitmaps = {
+  [key in Square]: string | null;
+};
+export const squareBitmaps: SquareBitmaps = {
   [Square.Empty]: null,
   [Square.Pickup]: getAssetPath("assets/apple.png"),
   [Square.Edge]: null,
