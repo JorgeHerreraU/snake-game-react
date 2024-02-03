@@ -12,16 +12,13 @@ import { Cell } from "./Cell";
 import { getSnakeBodySquareByPoints, Point } from "./point";
 import { Direction } from "./direction.ts";
 import {
-  GAME_SCORE_TITLE,
   GAME_OVER_TITLE,
-  RESTART_TEXT,
+  GAME_SCORE_TITLE,
   REFRESH_RATE,
-  ARROW_LEFT,
-  ARROW_RIGHT,
-  ARROW_UP,
-  ARROW_DOWN,
+  RESTART_TEXT,
 } from "./constants.ts";
 import { SquareBitmaps, squareBitmaps } from "./square-bitmaps.ts";
+import { addRandomPickup, getDirectionByKey } from "./game-utils.ts";
 
 type BoardState = {
   snake: Point[];
@@ -74,14 +71,6 @@ function GameBoard({ size = 15 }) {
     newGrid[snakeHead.y][snakeHead.x] = Square.SnakeHeadRight;
     newGrid[snakeTail.y][snakeTail.x] = Square.SnakeTailLeft;
     return newGrid;
-  }
-
-  function setupFood(gridState: Square[][]): Point {
-    const emptyPositions = getAllEmptyPositions(gridState);
-    const index = Math.floor(Math.random() * emptyPositions.length);
-    const [row, col] = emptyPositions[index];
-    gridState[row][col] = Square.Pickup;
-    return { x: col, y: row };
   }
 
   const getSquare = useCallback(getSnakeBodySquareByPoints, []);
@@ -145,21 +134,10 @@ function GameBoard({ size = 15 }) {
   function setupGame(): BoardState {
     const snakeState = setupSnake();
     const gridState = setupGrid(snakeState);
-    const foodState = setupFood(gridState);
+    const foodState = addRandomPickup(gridState);
     return { snake: snakeState, grid: gridState, food: foodState };
   }
 
-  function getAllEmptyPositions(gridState: Square[][]): number[][] {
-    const emptyPositions = [];
-    for (let row = 0; row < gridState.length; row++) {
-      for (let col = 0; col < gridState[row].length; col++) {
-        if (gridState[row][col] === Square.Empty) {
-          emptyPositions.push([row, col]);
-        }
-      }
-    }
-    return emptyPositions;
-  }
   const CellMemo = memo(Cell);
 
   const renderGrid = useCallback(
@@ -176,7 +154,7 @@ function GameBoard({ size = 15 }) {
     [CellMemo],
   );
 
-  const addPickup = useCallback(setupFood, []);
+  const addPickup = useCallback(addRandomPickup, []);
 
   const hitWall = useCallback(
     (newHead: Point): boolean =>
@@ -243,21 +221,6 @@ function GameBoard({ size = 15 }) {
     },
     [gameLoop, isGameFinished],
   );
-
-  const getDirectionByKey = (key: string): Direction | null => {
-    switch (key) {
-      case ARROW_LEFT:
-        return Direction.Left;
-      case ARROW_RIGHT:
-        return Direction.Right;
-      case ARROW_UP:
-        return Direction.Up;
-      case ARROW_DOWN:
-        return Direction.Down;
-      default:
-        return null;
-    }
-  };
 
   const canSetDirection = useCallback(
     (nextMove: Direction) => {
