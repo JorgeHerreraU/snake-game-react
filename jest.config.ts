@@ -30,4 +30,5 @@ export default {
     "^.+\\.(css|less|scss)$": "identity-obj-proxy",
     "^@app/(.*)$": "<rootDir>/$1",
   },
+  testMatch: ["**/tests/**/*.tsx"],
 };
