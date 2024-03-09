@@ -9,7 +9,6 @@ import React, {
 import "./GameBoard.css";
 import { Square } from "./enums/square";
 import { Cell } from "./Cell";
-import { getSnakeBodySquareByPoints, Point } from "./point";
 import { Direction } from "./direction.ts";
 import {
   GAME_OVER_TITLE,
@@ -18,7 +17,19 @@ import {
   RESTART_TEXT,
 } from "./constants.ts";
 import { SquareBitmaps, squareBitmaps } from "./square-bitmaps.ts";
-import { addRandomPickup, getDirectionByKey } from "./game-utils.ts";
+import {
+  addRandomPickup,
+  getDirectionByKey,
+  refreshPage,
+  setupGrid,
+  setupSnake,
+} from "./game-utils.ts";
+import {
+  getSnakeBodySquare,
+  getSnakeHeadSquare,
+  getSnakeTailSquare,
+} from "./snake-utils.ts";
+import { Point } from "./point.ts";
 
 type BoardState = {
   snake: Point[];
@@ -48,94 +59,39 @@ function GameBoard({ size = 15 }) {
     preloadImages(squareBitmaps);
   }, []);
 
-  function setupSnake(): Point[] {
-    const newSnake: Point[] = [];
-    const row = Math.floor(size / 2);
-    for (let col = 1; col <= 3; col++) {
-      newSnake.unshift({ x: col, y: row });
-    }
-    return newSnake;
-  }
-
-  function setupGrid(snakeState: Point[]): Square[][] {
-    const newGrid = Array.from({ length: size }, () =>
-      Array.from({ length: size }, () => Square.Empty),
-    );
-
-    snakeState.forEach((point) => {
-      newGrid[point.y][point.x] = Square.SnakeBodyHorizontal;
-    });
-
-    const snakeHead = snakeState[0];
-    const snakeTail = snakeState[snakeState.length - 1];
-    newGrid[snakeHead.y][snakeHead.x] = Square.SnakeHeadRight;
-    newGrid[snakeTail.y][snakeTail.x] = Square.SnakeTailLeft;
-    return newGrid;
-  }
-
-  const getSquare = useCallback(getSnakeBodySquareByPoints, []);
-
   const moveSnake = useCallback(
     (snakeState: Point[]): Square[][] => {
-      const newGrid: Square[][] = new Array(size)
-        .fill(null)
-        .map(() => new Array(size).fill(Square.Empty));
+      const grid: Square[][] = boardState.grid;
 
+      // Clear grid rows
+      grid.forEach((row) => row.fill(Square.Empty));
+
+      // Set snake head
       const snakeHead = snakeState[0];
-      switch (direction) {
-        case Direction.Left:
-          newGrid[snakeHead.y][snakeHead.x] = Square.SnakeHeadLeft;
-          break;
-        case Direction.Right:
-          newGrid[snakeHead.y][snakeHead.x] = Square.SnakeHeadRight;
-          break;
-        case Direction.Up:
-          newGrid[snakeHead.y][snakeHead.x] = Square.SnakeHeadUp;
-          break;
-        case Direction.Down:
-          newGrid[snakeHead.y][snakeHead.x] = Square.SnakeHeadDown;
-          break;
-      }
+      grid[snakeHead.y][snakeHead.x] = getSnakeHeadSquare(direction);
 
+      // Set snake body
       for (let i = 1; i < snakeState.length - 1; i++) {
         const prev = snakeState[i - 1];
         const next = snakeState[i + 1];
         const current = snakeState[i];
-        newGrid[current.y][current.x] = getSquare(prev, current, next);
+        grid[current.y][current.x] = getSnakeBodySquare(prev, current, next);
       }
 
+      // Set snake tail
       const snakeTail = snakeState[snakeState.length - 1];
-      const snakeTailPrev = snakeState[snakeState.length - 2];
-      const deltaX = snakeTail.x - snakeTailPrev.x;
-      const deltaY = snakeTail.y - snakeTailPrev.y;
+      grid[snakeTail.y][snakeTail.x] = getSnakeTailSquare(snakeState);
 
-      const tailDirection =
-        deltaY === 1
-          ? Square.SnakeTailDown
-          : deltaY === -1
-            ? Square.SnakeTailUp
-            : deltaX === -1
-              ? Square.SnakeTailLeft
-              : deltaX === 1
-                ? Square.SnakeTailRight
-                : null;
-
-      newGrid[snakeTail.y][snakeTail.x] = tailDirection!;
-
-      return newGrid;
+      return grid;
     },
-    [direction, getSquare, size],
+    [boardState.grid, direction],
   );
 
-  function refreshPage(): void {
-    window.location.reload();
-  }
-
   function setupGame(): BoardState {
-    const snakeState = setupSnake();
-    const gridState = setupGrid(snakeState);
-    const foodState = addRandomPickup(gridState);
-    return { snake: snakeState, grid: gridState, food: foodState };
+    const snake = setupSnake(size);
+    const grid = setupGrid(size);
+    const food = addRandomPickup(grid);
+    return { snake, grid, food };
   }
 
   const CellMemo = memo(Cell);
@@ -162,12 +118,11 @@ function GameBoard({ size = 15 }) {
     [size],
   );
 
-  function hitSelf(newSnake: Point[], newHead: Point): boolean {
-    return newSnake.some(
+  const hitSelf = (newSnake: Point[], newHead: Point): boolean =>
+    newSnake.some(
       (snakeBodySegment: Point) =>
         snakeBodySegment.x === newHead.x && snakeBodySegment.y === newHead.y,
     );
-  }
 
   const hasPickedUpFood = useCallback(
     (newHead: Point) =>
@@ -193,14 +148,14 @@ function GameBoard({ size = 15 }) {
 
     if (hasPickedUpFood(newHead)) {
       setScore((prev) => prev + 1);
-      const newGrid = moveSnake(newSnake);
-      const newFood = addPickup(newGrid);
-      setBoardState({ snake: newSnake, grid: newGrid, food: newFood });
+      const grid = moveSnake(newSnake);
+      const newFood = addPickup(grid);
+      setBoardState({ snake: newSnake, grid: grid, food: newFood });
     } else {
       newSnake.pop();
-      const newGrid = moveSnake(newSnake);
-      newGrid[boardState.food.y][boardState.food.x] = Square.Pickup;
-      setBoardState({ ...boardState, snake: newSnake, grid: newGrid });
+      const grid = moveSnake(newSnake);
+      grid[boardState.food.y][boardState.food.x] = Square.Pickup;
+      setBoardState({ ...boardState, snake: newSnake, grid: grid });
     }
   }, [boardState, direction, hitWall, hasPickedUpFood, moveSnake, addPickup]);
 

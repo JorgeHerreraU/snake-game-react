@@ -26,6 +26,24 @@ export const getDirectionByKey = (key: string): Direction | null => {
   }
 };
 
+export const refreshPage = (): void => {
+  window.location.reload();
+};
+
+export const setupSnake = (size: number): Point[] => {
+  const snake: Point[] = [];
+  const row = Math.floor(size / 2);
+  for (let col = 1; col <= 3; col++) {
+    snake.unshift({ x: col, y: row });
+  }
+  return snake;
+};
+
+export const setupGrid = (size: number): Square[][] =>
+  Array.from({ length: size }, () =>
+    Array.from({ length: size }, () => Square.Empty),
+  );
+
 const getAllEmptyPositions = (gridState: Square[][]): number[][] => {
   const emptyPositions = [];
   for (let row = 0; row < gridState.length; row++) {
