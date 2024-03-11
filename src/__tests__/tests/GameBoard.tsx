@@ -13,7 +13,7 @@ import {
   ARROW_LEFT,
   ARROW_RIGHT,
   ARROW_UP,
-  REFRESH_RATE,
+  GAME_UPDATE_RATE,
 } from "../../constants.ts";
 import { DEFAULT_TIMEOUT } from "../utils/test-constants.ts";
 import { getSnakeHeadPosition, getSnakeSize } from "../utils/test-utils.ts";
@@ -56,18 +56,18 @@ describe("GameBoard movements", () => {
     let finalPosition: Point;
     // Initial movement to the right
     act(() => {
-      jest.advanceTimersByTime(REFRESH_RATE * 2);
+      jest.advanceTimersByTime(GAME_UPDATE_RATE * 2);
     });
     initialPosition = getSnakeHeadPosition();
     act(() => {
-      jest.advanceTimersByTime(REFRESH_RATE);
+      jest.advanceTimersByTime(GAME_UPDATE_RATE);
     });
     finalPosition = getSnakeHeadPosition();
     expect(finalPosition.x).toBeGreaterThan(initialPosition.x);
     // Move the snake up
     fireEvent.keyDown(window, { key: ARROW_UP });
     act(() => {
-      jest.advanceTimersByTime(REFRESH_RATE);
+      jest.advanceTimersByTime(GAME_UPDATE_RATE);
     });
     await waitFor(
       () => {
@@ -79,7 +79,7 @@ describe("GameBoard movements", () => {
     // Move the snake left
     fireEvent.keyDown(window, { key: ARROW_LEFT });
     act(() => {
-      jest.advanceTimersByTime(REFRESH_RATE);
+      jest.advanceTimersByTime(GAME_UPDATE_RATE);
     });
     await waitFor(
       () => {
@@ -92,7 +92,7 @@ describe("GameBoard movements", () => {
     // Move the snake down
     fireEvent.keyDown(window, { key: ARROW_DOWN });
     act(() => {
-      jest.advanceTimersByTime(REFRESH_RATE);
+      jest.advanceTimersByTime(GAME_UPDATE_RATE);
     });
     await waitFor(
       () => {
@@ -105,7 +105,7 @@ describe("GameBoard movements", () => {
     // Move the snake right
     fireEvent.keyDown(window, { key: ARROW_RIGHT });
     act(() => {
-      jest.advanceTimersByTime(REFRESH_RATE);
+      jest.advanceTimersByTime(GAME_UPDATE_RATE);
     });
     await waitFor(
       () => {
@@ -127,7 +127,7 @@ describe("GameBoard interactions", () => {
     const scoreText = screen.getByText(/SCORE: 0/i);
     expect(scoreText).toBeInTheDocument();
     act(() => {
-      jest.advanceTimersByTime(REFRESH_RATE);
+      jest.advanceTimersByTime(GAME_UPDATE_RATE);
     });
     await waitFor(
       () => {

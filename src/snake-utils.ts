@@ -7,59 +7,40 @@ export function getSnakeBodySquare(
   current: Point,
   next: Point,
 ): Square {
-  const isTopLeft =
-    (prev.x === current.x &&
-      prev.y < current.y &&
-      next.x < current.x &&
-      next.y === current.y) ||
-    (prev.x < current.x &&
-      prev.y === current.y &&
-      next.x === current.x &&
-      next.y < current.y);
-  const isTopRight =
-    (prev.x > current.x &&
-      prev.y === current.y &&
-      next.x === current.x &&
-      next.y < current.y) ||
-    (prev.x === current.x &&
-      prev.y < current.y &&
-      next.x > current.x &&
-      next.y === current.y);
-  const isBottomLeft =
-    (prev.x < current.x &&
-      prev.y === current.y &&
-      next.x === current.x &&
-      next.y > current.y) ||
-    (prev.x === current.x &&
-      prev.y > current.y &&
-      next.x < current.x &&
-      next.y === current.y);
-  const isBottomRight =
-    (prev.x === current.x &&
-      prev.y > current.y &&
-      next.x > current.x &&
-      next.y === current.y) ||
-    (prev.x > current.x &&
-      prev.y === current.y &&
-      next.x === current.x &&
-      next.y > current.y);
-  const isVertical =
-    prev.y !== current.y &&
-    next.y !== current.y &&
-    prev.x === current.x &&
-    next.x === current.x;
-  const isHorizontal =
-    prev.y === current.y &&
-    next.y === current.y &&
-    prev.x !== current.x &&
-    next.x !== current.x;
+  // Check for horizontal and vertical
+  if (prev.x === current.x && current.x === next.x) {
+    return Square.SnakeBodyVertical;
+  }
+  if (prev.y === current.y && current.y === next.y) {
+    return Square.SnakeBodyHorizontal;
+  }
 
-  if (isTopLeft) return Square.SnakeBodyTopLeft;
-  if (isTopRight) return Square.SnakeBodyTopRight;
-  if (isBottomLeft) return Square.SnakeBodyBottomLeft;
-  if (isBottomRight) return Square.SnakeBodyBottomRight;
-  if (isVertical) return Square.SnakeBodyVertical;
-  if (isHorizontal) return Square.SnakeBodyHorizontal;
+  // Diagonal checks
+  if (prev.x === current.x && prev.y < current.y && next.x > current.x) {
+    return Square.SnakeBodyTopRight;
+  }
+  if (prev.x === current.x && prev.y < current.y && next.x <= current.x) {
+    return Square.SnakeBodyTopLeft;
+  }
+  if (prev.x === current.x && prev.y >= current.y && next.x > current.x) {
+    return Square.SnakeBodyBottomRight;
+  }
+  if (prev.x === current.x && prev.y >= current.y && next.x <= current.x) {
+    return Square.SnakeBodyBottomLeft;
+  }
+  if (prev.y === current.y && prev.x < current.x && next.y > current.y) {
+    return Square.SnakeBodyBottomLeft;
+  }
+  if (prev.y === current.y && prev.x < current.x && next.y <= current.y) {
+    return Square.SnakeBodyTopLeft;
+  }
+  if (prev.y === current.y && prev.x >= current.x && next.y > current.y) {
+    return Square.SnakeBodyBottomRight;
+  }
+  if (prev.y === current.y && prev.x >= current.x && next.y <= current.y) {
+    return Square.SnakeBodyTopRight;
+  }
+
   return Square.Empty;
 }
 

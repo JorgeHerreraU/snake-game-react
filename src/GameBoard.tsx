@@ -13,7 +13,8 @@ import { Direction } from "./direction.ts";
 import {
   GAME_OVER_TITLE,
   GAME_SCORE_TITLE,
-  REFRESH_RATE,
+  GAME_UPDATE_RATE,
+  MAX_NEXT_MOVEMENTS,
   RESTART_TEXT,
 } from "./constants.ts";
 import { SquareBitmaps, squareBitmaps } from "./square-bitmaps.ts";
@@ -46,6 +47,7 @@ function GameBoard({ size = 15 }) {
   const nextMoves = useRef<Direction[]>([]);
   const requestRef = useRef<number | null>();
   const previousTimeRef = useRef<number | null>();
+  const accumulatorRef = useRef(0);
 
   useEffect(() => {
     const preloadImages = (imageMap: SquareBitmaps) => {
@@ -161,17 +163,31 @@ function GameBoard({ size = 15 }) {
 
   const animate = useCallback(
     (time: number) => {
-      if (previousTimeRef.current) {
-        const deltaTime = time - previousTimeRef.current;
-        if (deltaTime > REFRESH_RATE) {
-          gameLoop();
-          previousTimeRef.current = time;
-        }
-      } else {
+      if (!previousTimeRef.current) {
+        // Initialize on the first animation frame.
         previousTimeRef.current = time;
       }
+
+      // Calculate the time elapsed since the last frame was rendered
+      const deltaTime = time - previousTimeRef.current;
+
+      // Update the previous time reference for the next frame calculation
+      previousTimeRef.current = time;
+
+      // Request the next animation frame to ensure smooth rendering
       if (!isGameFinished) {
         requestRef.current = requestAnimationFrame(animate);
+      }
+
+      // Accumulate the elapsed time to track how much time has passed in total
+      accumulatorRef.current += deltaTime;
+
+      // Continuously update the game state at a fixed rate (GAME_UPDATE_RATE)
+      while (accumulatorRef.current >= GAME_UPDATE_RATE) {
+        // Execute game logic updates
+        gameLoop();
+        // Consumes the fixed update rate from the accumulated time
+        accumulatorRef.current -= GAME_UPDATE_RATE;
       }
     },
     [gameLoop, isGameFinished],
@@ -202,7 +218,11 @@ function GameBoard({ size = 15 }) {
   useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {
       const nextMove = getDirectionByKey(event.key);
-      if (nextMove && canSetDirection(nextMove)) {
+      if (
+        nextMove &&
+        canSetDirection(nextMove) &&
+        nextMoves.current.length < MAX_NEXT_MOVEMENTS
+      ) {
         nextMoves.current.push(nextMove);
       }
     };
