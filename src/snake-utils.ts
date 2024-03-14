@@ -74,3 +74,15 @@ export const getSnakeTailSquare = (snakeState: Point[]): Square => {
           ? Square.SnakeTailRight
           : null!;
 };
+
+export const hitWall = (snakeHead: Point, size: number): boolean =>
+  snakeHead.x < 0 ||
+  snakeHead.x >= size ||
+  snakeHead.y < 0 ||
+  snakeHead.y >= size;
+
+export const hitSelf = (newSnake: Point[], newHead: Point): boolean =>
+  newSnake.some(
+    (snakeBodySegment: Point) =>
+      snakeBodySegment.x === newHead.x && snakeBodySegment.y === newHead.y,
+  );

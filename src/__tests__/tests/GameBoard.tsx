@@ -121,7 +121,7 @@ describe("GameBoard movements", () => {
 describe("GameBoard interactions", () => {
   test("Should handle food pickup", async () => {
     jest.useFakeTimers();
-    jest.spyOn(utils, "addRandomPickup").mockReturnValue({ x: 4, y: 7 });
+    jest.spyOn(utils, "addPickup").mockReturnValue({ x: 4, y: 7 });
     render(<GameBoard size={15} />);
     const initialSnakeSize = getSnakeSize();
     const scoreText = screen.getByText(/SCORE: 0/i);

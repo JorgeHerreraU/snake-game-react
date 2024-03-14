@@ -19,7 +19,7 @@ import {
 } from "./constants.ts";
 import { SquareBitmaps, squareBitmaps } from "./square-bitmaps.ts";
 import {
-  addRandomPickup,
+  addPickup,
   getDirectionByKey,
   refreshPage,
   setupGrid,
@@ -29,6 +29,8 @@ import {
   getSnakeBodySquare,
   getSnakeHeadSquare,
   getSnakeTailSquare,
+  hitSelf,
+  hitWall,
 } from "./snake-utils.ts";
 import { Point } from "./point.ts";
 
@@ -92,7 +94,7 @@ function GameBoard({ size = 15 }) {
   function setupGame(): BoardState {
     const snake = setupSnake(size);
     const grid = setupGrid(size);
-    const food = addRandomPickup(grid);
+    const food = addPickup(grid);
     return { snake, grid, food };
   }
 
@@ -112,20 +114,6 @@ function GameBoard({ size = 15 }) {
     [CellMemo],
   );
 
-  const addPickup = useCallback(addRandomPickup, []);
-
-  const hitWall = useCallback(
-    (newHead: Point): boolean =>
-      newHead.x < 0 || newHead.x >= size || newHead.y < 0 || newHead.y >= size,
-    [size],
-  );
-
-  const hitSelf = (newSnake: Point[], newHead: Point): boolean =>
-    newSnake.some(
-      (snakeBodySegment: Point) =>
-        snakeBodySegment.x === newHead.x && snakeBodySegment.y === newHead.y,
-    );
-
   const hasPickedUpFood = useCallback(
     (newHead: Point) =>
       newHead.x === boardState.food.x && newHead.y === boardState.food.y,
@@ -141,7 +129,7 @@ function GameBoard({ size = 15 }) {
     const currentHead = newSnake[0];
     const newHead = direction.move(currentHead);
 
-    if (hitWall(newHead) || hitSelf(newSnake, newHead)) {
+    if (hitWall(newHead, size) || hitSelf(newSnake, newHead)) {
       setIsGameFinished(true);
       return;
     }
@@ -159,7 +147,7 @@ function GameBoard({ size = 15 }) {
       grid[boardState.food.y][boardState.food.x] = Square.Pickup;
       setBoardState({ ...boardState, snake: newSnake, grid: grid });
     }
-  }, [boardState, direction, hitWall, hasPickedUpFood, moveSnake, addPickup]);
+  }, [boardState, direction, size, hasPickedUpFood, moveSnake]);
 
   const animate = useCallback(
     (time: number) => {

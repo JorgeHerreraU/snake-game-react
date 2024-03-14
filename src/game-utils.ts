@@ -3,11 +3,10 @@ import { Point } from "./point.ts";
 import { Direction } from "./direction.ts";
 import { ARROW_DOWN, ARROW_LEFT, ARROW_RIGHT, ARROW_UP } from "./constants.ts";
 
-export const addRandomPickup = (gridState: Square[][]): Point => {
-  const emptyPositions = getAllEmptyPositions(gridState);
+export const addPickup = (grid: Square[][]): Point => {
+  const emptyPositions = getAllEmptyPositions(grid);
   const index = Math.floor(Math.random() * emptyPositions.length);
   const [row, col] = emptyPositions[index];
-  gridState[row][col] = Square.Pickup;
   return { x: col, y: row };
 };
 
