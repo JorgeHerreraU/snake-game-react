@@ -1,9 +1,11 @@
 export const GAME_SCORE_TITLE = "SCORE";
-export const GAME_OVER_TITLE = "GAME OVER - FINAL SCORE";
+export const GAME_OVER_TITLE = "GAME OVER";
+export const HIGH_SCORE = "HIGH SCORE"
+export const MENU_TEXT = "MENU";
+export const MAX_REFRESH_RATE = 1000;
 export const RESTART_TEXT = "RESTART";
 export const ARROW_LEFT = "ArrowLeft";
 export const ARROW_RIGHT = "ArrowRight";
 export const ARROW_UP = "ArrowUp";
 export const ARROW_DOWN = "ArrowDown";
 export const MAX_NEXT_MOVEMENTS = 2;
-export const GAME_UPDATE_RATE = 1000 / 10;

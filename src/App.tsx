@@ -1,10 +1,10 @@
 import "./App.css";
-import GameBoard from "./GameBoard.tsx";
+import GameMenu from "./GameMenu.tsx";
 
 function App() {
   return (
     <>
-      <GameBoard />
+    <GameMenu />
     </>
   );
 }

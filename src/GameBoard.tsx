@@ -13,8 +13,10 @@ import { Direction } from "./direction.ts";
 import {
   GAME_OVER_TITLE,
   GAME_SCORE_TITLE,
-  GAME_UPDATE_RATE,
+  HIGH_SCORE,
   MAX_NEXT_MOVEMENTS,
+  MAX_REFRESH_RATE,
+  MENU_TEXT,
   RESTART_TEXT,
 } from "./constants.ts";
 import { SquareBitmaps, squareBitmaps } from "./square-bitmaps.ts";
@@ -33,6 +35,7 @@ import {
   hitWall,
 } from "./snake-utils.ts";
 import { Point } from "./point.ts";
+import { Difficulty } from "./difficulty.ts";
 
 type BoardState = {
   snake: Point[];
@@ -40,11 +43,13 @@ type BoardState = {
   food: Point;
 };
 
-function GameBoard({ size = 15 }) {
+function GameBoard({ size = 10, difficulty = Difficulty.Easy }) {
   const [score, setScore] = useState(0);
   const [boardState, setBoardState] = useState<BoardState>(setupGame());
   const [direction, setDirection] = useState<Direction>(Direction.Right);
   const [isGameFinished, setIsGameFinished] = useState(false);
+  const [gameUpdateRate] = useState(MAX_REFRESH_RATE / difficulty);
+  const [highScore, setHighScore] = useState(0);
 
   const nextMoves = useRef<Direction[]>([]);
   const requestRef = useRef<number | null>();
@@ -170,15 +175,15 @@ function GameBoard({ size = 15 }) {
       // Accumulate the elapsed time to track how much time has passed in total
       accumulatorRef.current += deltaTime;
 
-      // Continuously update the game state at a fixed rate (GAME_UPDATE_RATE)
-      while (accumulatorRef.current >= GAME_UPDATE_RATE) {
+      // Continuously update the game state at a fixed rate
+      while (accumulatorRef.current >= gameUpdateRate) {
         // Execute game logic updates
         gameLoop();
         // Consumes the fixed update rate from the accumulated time
-        accumulatorRef.current -= GAME_UPDATE_RATE;
+        accumulatorRef.current -= gameUpdateRate;
       }
     },
-    [gameLoop, isGameFinished],
+    [gameLoop, gameUpdateRate, isGameFinished],
   );
 
   const canSetDirection = useCallback(
@@ -223,23 +228,47 @@ function GameBoard({ size = 15 }) {
     [boardState.grid, renderGrid],
   );
 
+  const resetGame = () => {
+    setScore(0);
+    setBoardState(setupGame());
+    setDirection(Direction.Right);
+    setIsGameFinished(false);
+    nextMoves.current = [];
+    accumulatorRef.current = 0;
+  };
+
+  useEffect(() => {
+    if (score > highScore) {
+      setHighScore(score);
+      localStorage.setItem('highScore', score.toString());
+    }
+  }, [score, highScore]);
+
+
   return (
     <>
       <div className="score-text">
-        {isGameFinished
-          ? `${GAME_OVER_TITLE}: ${score}`
-          : `${GAME_SCORE_TITLE}: ${score}`}
+        <div>{`${GAME_SCORE_TITLE}: ${score}`}</div>
+        <div style={{ visibility: isGameFinished ? 'visible' : 'hidden'}}>
+          <div>{GAME_OVER_TITLE}</div>
+          <div>{HIGH_SCORE}: {highScore}</div>
+        </div>
       </div>
+
       <table className="game-board">
         <tbody>{renderedGrid}</tbody>
       </table>
       <div>
+
         <button
           onClick={refreshPage}
           className="btn-board"
-          disabled={!isGameFinished}
         >
-          {RESTART_TEXT}
+          {MENU_TEXT}
+        </button>
+        <button
+          onClick={resetGame}
+          disabled={!isGameFinished}>{RESTART_TEXT}
         </button>
       </div>
     </>

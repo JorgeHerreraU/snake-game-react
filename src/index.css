@@ -1,3 +1,8 @@
+@font-face {
+  font-family: 'Rocher';
+  src: url(https://assets.codepen.io/9632/RocherColorGX.woff2);
+}
+
 :root {
   font-family: Inter, system-ui, Avenir, Helvetica, Arial, sans-serif;
   line-height: 1.5;
@@ -65,4 +70,46 @@ button:focus-visible {
   button {
     background-color: #f9f9f9;
   }
+}
+
+.snake-logo {
+  width: 100%;
+  height: auto;
+  max-width: 400px;
+}
+
+.difficulty-buttons {
+  display: flex;
+  justify-content: space-around;
+}
+
+.cartoon-button {
+  font-family: 'Comic Sans MS', 'Comic Neue', cursive;
+  font-size: 24px;
+  color: white;
+  border: none;
+  border-radius: 10px;
+  box-shadow: 5px 5px 0px rgba(0, 0, 0, 0.2);
+  cursor: pointer;
+  transition: background-color 0.3s, box-shadow 0.3s;
+}
+
+.color-red {
+  background-color: #ff6699;
+}
+
+.color-blue {
+  background-color: #5a58cc;
+}
+
+.color-cyan {
+  background-color: #004458;
+}
+
+.snake-title {
+  font-family: 'Rocher';
+}
+
+.arrow-keys {
+  font-size: 45px;
 }
